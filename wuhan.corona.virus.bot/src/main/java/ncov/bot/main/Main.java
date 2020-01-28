@@ -36,7 +36,7 @@ public class Main {
 			cin.close();
 			
 			Timer dxyRefresh = new Timer();
-			dxyRefresh.schedule(new dxyCrawler(), 10000);
+			dxyRefresh.schedule(new dxyCrawler(), 60000);
 			
 			api.addMessageCreateListener(new NormalCommand());
 			

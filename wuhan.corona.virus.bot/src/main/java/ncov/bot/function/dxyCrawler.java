@@ -7,8 +7,10 @@ import java.util.Date;
 import java.util.NoSuchElementException;
 import java.util.TimerTask;
 
+import org.javacord.api.entity.channel.ServerChannel;
 import org.javacord.api.entity.channel.TextChannel;
 import org.javacord.api.entity.message.embed.EmbedBuilder;
+import org.javacord.api.entity.server.Server;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.select.Elements;
@@ -20,6 +22,7 @@ import com.google.gson.JsonParser;
 import com.luhuiguo.chinese.ChineseUtils;
 
 import ncov.bot.main.Main;
+import ncov.bot.util.ChannelData;
 import ncov.bot.util.Data;
 
 public class dxyCrawler extends TimerTask {
@@ -115,12 +118,14 @@ public class dxyCrawler extends TimerTask {
 
 			if (DataBase.published.get(time) == true) continue;
 			
-			for (long channelID : DataBase.alertChannel) {
+			for (ChannelData data : DataBase.alertChannel) {
 				try {
-					TextChannel channel = Main.api.getChannelById(channelID).get().asTextChannel().get();
-					channel.sendMessage(embed);
+					Server server = Main.api.getServerById(data.getServerID()).get();
+					ServerChannel channel = server.getChannelById(data.getChannelID()).get();
+					TextChannel textChannel = channel.asTextChannel().get();
+					textChannel.sendMessage(embed);
 				} catch (NoSuchElementException e) {
-					DataBase.removeAlertChannelTemp.add(channelID);
+					DataBase.removeAlertChannelTemp.add(data);
 				}
 			}
 

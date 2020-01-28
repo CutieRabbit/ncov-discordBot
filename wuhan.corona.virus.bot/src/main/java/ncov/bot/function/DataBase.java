@@ -10,15 +10,16 @@ import java.util.Scanner;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
+import ncov.bot.util.ChannelData;
 import ncov.bot.util.Data;
 
 public class DataBase {
 	
 	public static Map<Long,Data> dataMap = new HashMap<Long,Data>();
 	public static Map<Long,Boolean> published = new HashMap<>();
-	public static List<Long> alertChannel = new ArrayList<>();
+	public static List<ChannelData> alertChannel = new ArrayList<>();
 	public static List<Long> timeList = new ArrayList<>();
-	public static List<Long> removeAlertChannelTemp = new ArrayList<>();
+	public static List<ChannelData> removeAlertChannelTemp = new ArrayList<>();
 
 	public static void publishLode() {
 		try {
@@ -57,8 +58,10 @@ public class DataBase {
 			if(!file.exists()) file.createNewFile();
 			Scanner cin = new Scanner(file);
 			while(cin.hasNext()) {
+				Long serverID = cin.nextLong();
 				Long channelID = cin.nextLong();
-				alertChannel.add(channelID);
+				ChannelData data = new ChannelData(serverID, channelID);
+				alertChannel.add(data);
 			}
 			cin.close();
 		}catch(Exception e) {
@@ -70,11 +73,11 @@ public class DataBase {
 		try {
 			File file = new File("AlertChannel.txt");
 			PrintWriter pw = new PrintWriter(file);
-			for(long channelID : removeAlertChannelTemp) {
-				alertChannel.remove(channelID);
+			for(ChannelData channelData : removeAlertChannelTemp) {
+				alertChannel.remove(channelData);
 			}
-			for(long channelID : alertChannel) {
-				pw.println(channelID);
+			for(ChannelData data : alertChannel) {
+				pw.println(data.getServerID() + " " + data.getChannelID());
 			}
 			pw.flush();
 			pw.close();

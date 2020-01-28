@@ -6,23 +6,27 @@ import org.javacord.api.entity.channel.TextChannel;
 import org.javacord.api.entity.message.Message;
 import org.javacord.api.entity.message.MessageAuthor;
 import org.javacord.api.entity.message.embed.EmbedBuilder;
+import org.javacord.api.entity.server.Server;
 import org.javacord.api.event.message.MessageCreateEvent;
 import org.javacord.api.listener.message.MessageCreateListener;
 
 import ncov.bot.exception.NoPermissionException;
 import ncov.bot.function.DataBase;
 import ncov.bot.main.Main;
+import ncov.bot.util.ChannelData;
 
 public class NormalCommand implements MessageCreateListener{
 
 	@Override
 	public void onMessageCreate(MessageCreateEvent event) {
 		
+		Server server = event.getServer().get();
 		TextChannel channel = event.getChannel();
 		Message message = event.getMessage();
 		MessageAuthor author = message.getAuthor();
 		String content = message.getContent();
 		long channelID = channel.getId();
+		long serverID = server.getId();
 		
 		if(author.isYourself()) return;
 		if(event.getServer() == null) return;
@@ -33,8 +37,9 @@ public class NormalCommand implements MessageCreateListener{
 		
 			if(content.equals(prefix + "addChannel")) {
 				if(!author.isBotOwner()) throw new NoPermissionException(channel);
-				if(!DataBase.alertChannel.contains(channelID)) {
-					DataBase.alertChannel.add(channelID);
+				ChannelData data = new ChannelData(serverID, channelID);
+				if(!DataBase.alertChannel.contains(data)) {
+					DataBase.alertChannel.add(data);
 				}
 				EmbedBuilder embed = new EmbedBuilder();
 				embed.setTitle("設定成功!");
@@ -46,8 +51,9 @@ public class NormalCommand implements MessageCreateListener{
 			
 			if(content.equals(prefix + "removeChannel")) {
 				if(!author.isBotOwner()) throw new NoPermissionException(channel);
-				if(DataBase.alertChannel.contains(channelID)) {
-					DataBase.alertChannel.remove(channelID);
+				ChannelData data = new ChannelData(serverID, channelID);
+				if(DataBase.alertChannel.contains(data)) {
+					DataBase.alertChannel.remove(data);
 				}
 				EmbedBuilder embed = new EmbedBuilder();
 				embed.setTitle("設定成功!");
