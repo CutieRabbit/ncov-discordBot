@@ -10,7 +10,7 @@ import org.javacord.api.DiscordApiBuilder;
 
 import ncov.bot.command.NormalCommand;
 import ncov.bot.function.DataBase;
-import ncov.bot.function.dxyCrawler;
+import ncov.bot.function.dxyCrawlerNews;
 
 public class Main {
 
@@ -36,7 +36,7 @@ public class Main {
 			cin.close();
 			
 			Timer dxyRefresh = new Timer();
-			dxyRefresh.schedule(new dxyCrawler(), 60000);
+			dxyRefresh.schedule(new dxyCrawlerNews(), 0, 60000);
 			
 			api.addMessageCreateListener(new NormalCommand());
 			

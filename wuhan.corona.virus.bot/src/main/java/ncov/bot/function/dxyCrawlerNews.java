@@ -8,6 +8,7 @@ import java.util.NoSuchElementException;
 import java.util.TimerTask;
 
 import org.javacord.api.entity.channel.ServerChannel;
+import org.javacord.api.entity.channel.ServerVoiceChannel;
 import org.javacord.api.entity.channel.TextChannel;
 import org.javacord.api.entity.message.embed.EmbedBuilder;
 import org.javacord.api.entity.server.Server;
@@ -25,11 +26,13 @@ import ncov.bot.main.Main;
 import ncov.bot.util.ChannelData;
 import ncov.bot.util.Data;
 
-public class dxyCrawler extends TimerTask {
+public class dxyCrawlerNews extends TimerTask {
 
 	public void run() {
 		refresh();
 		alert();
+		chinaInfo();
+		taiwanInfo();
 	}
 
 	public static String url = "https://3g.dxy.cn/newh5/view/pneumonia_timeline?whichFrom=dxy";
@@ -116,8 +119,9 @@ public class dxyCrawler extends TimerTask {
 			embed.setFooter(timeString);
 			embed.setAuthor(info);
 
-			if (DataBase.published.get(time) == true) continue;
-			
+			if (DataBase.published.get(time) == true)
+				continue;
+
 			for (ChannelData data : DataBase.alertChannel) {
 				try {
 					Server server = Main.api.getServerById(data.getServerID()).get();
@@ -133,6 +137,99 @@ public class dxyCrawler extends TimerTask {
 		}
 		DataBase.publishSave();
 		DataBase.alertChannelSave();
+	}
+
+	public void chinaInfo() {
+
+		try {
+
+			long channel1 = 671705344233177089L;
+			long channel2 = 671706318540636200L;
+
+			Document doc = Jsoup.parse(new URL(url).openStream(), "UTF-8", url);
+			Elements scriptElements = doc.select("#getStatisticsService");
+
+			String rawData = scriptElements.toString();
+
+			int startIndex = 0, endIndex = 0;
+
+			for (int i = 0, count = 0; i < rawData.length(); i++) {
+				if (rawData.charAt(i) == '{') {
+					count++;
+					if (count == 2) {
+						startIndex = i;
+					}
+				} else if (rawData.charAt(i) == '}') {
+					endIndex = i;
+					break;
+				}
+			}
+
+			rawData = rawData.substring(startIndex, endIndex + 1);
+
+			JsonElement json = new JsonParser().parse(rawData);
+			JsonObject object = json.getAsJsonObject();
+
+			int confirm = object.get("confirmedCount").getAsInt();
+			int dead = object.get("deadCount").getAsInt();
+
+			ServerVoiceChannel ch1 = Main.api.getServerById(671605920333299712L).get().getVoiceChannelById(channel1)
+					.get();
+			ServerVoiceChannel ch2 = Main.api.getServerById(671605920333299712L).get().getVoiceChannelById(channel2)
+					.get();
+
+			ch1.updateName(String.format("中國確診：%d例", confirm));
+			ch2.updateName(String.format("中國死亡：%d例", dead));
+
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+
+	public void taiwanInfo() {
+
+		try {
+
+			long channel3 = 671705470628659201L;
+
+			Document doc = Jsoup.parse(new URL(url).openStream(), "UTF-8", url);
+			Elements scriptElements = doc.select("#getListByCountryTypeService1");
+
+			String rawData = scriptElements.toString();
+
+			int startIndex = 0, endIndex = 0;
+
+			for (int i = 0; i < rawData.length(); i++) {
+				if (rawData.charAt(i) == '[')
+					startIndex = i;
+				if (rawData.charAt(i) == ']')
+					endIndex = i;
+			}
+
+			rawData = rawData.substring(startIndex, endIndex + 1);
+
+			JsonElement json = new JsonParser().parse(rawData);
+
+			JsonArray array = json.getAsJsonArray();
+
+			int confirm = 0;
+
+			for (int i = 0; i < array.size(); i++) {
+				JsonObject object = array.get(i).getAsJsonObject();
+				String countryName = object.get("provinceName").getAsString();
+				countryName = ChineseUtils.toTraditional(countryName);
+				if (countryName.equals("台灣")) {
+					confirm = object.get("confirmedCount").getAsInt();
+				}
+			}
+
+			ServerVoiceChannel ch3 = Main.api.getServerById(671605920333299712L).get().getVoiceChannelById(channel3).get();
+
+			ch3.updateName(String.format("臺灣確診：%d例", confirm));
+
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 	}
 
 }

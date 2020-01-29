@@ -28,7 +28,6 @@ public class DataBase {
 			Scanner cin = new Scanner(file);
 			while(cin.hasNext()) {
 				long time = cin.nextLong();
-				System.out.println(time);
 				published.put(time, true);
 			}
 			cin.close();
