@@ -31,8 +31,7 @@ public class dxyCrawlerNews extends TimerTask {
 	public void run() {
 		refresh();
 		alert();
-		chinaInfo();
-		taiwanInfo();
+		infoUpdate();
 	}
 
 	public static String url = "https://3g.dxy.cn/newh5/view/pneumonia_timeline?whichFrom=dxy";
@@ -138,96 +137,55 @@ public class dxyCrawlerNews extends TimerTask {
 		DataBase.publishSave();
 		DataBase.alertChannelSave();
 	}
-
-	public void chinaInfo() {
-
+	
+	public void infoUpdate() {
+		String url = "https://en.wikipedia.org/wiki/2019%E2%80%9320_Wuhan_coronavirus_outbreak";
 		try {
-
+			
+			Document doc = Jsoup.connect(url).get();
+			
+			int chinaConfirm = 0;
+			int chinaDead = 0;
+			int taiwanConfirm = 0;
+			for(int i = 0; i < 20; i++) {
+				for (int j = 0; j < 20; j++) {
+					String country = doc.select(String.format(
+							"#mw-content-text > div > table:nth-child(%d) > tbody > tr:nth-child(%d) > td:nth-child(1)",
+							i, j)).text();
+					String confirm = doc.select(String.format(
+							"#mw-content-text > div > table:nth-child(%d) > tbody > tr:nth-child(%d) > td:nth-child(2)",
+							i, j)).text();
+					String death = doc.select(String.format(
+							"#mw-content-text > div > table:nth-child(%d) > tbody > tr:nth-child(%d) > td:nth-child(3)",
+							i, j)).text();
+					confirm = confirm.replaceAll(",", "");
+					death = death.replaceAll(",", "");
+					if (country.equals("")) continue;
+					if (country.contains("Mainland China")) {
+						chinaConfirm = Integer.parseInt(confirm);
+						chinaDead = Integer.parseInt(death);
+					}
+					if (country.contains("Taiwan")) {
+						taiwanConfirm = Integer.parseInt(confirm);
+					}
+				}
+			}
+			
 			long channel1 = 671705344233177089L;
 			long channel2 = 671706318540636200L;
-
-			Document doc = Jsoup.parse(new URL(url).openStream(), "UTF-8", url);
-			Elements scriptElements = doc.select("#getStatisticsService");
-
-			String rawData = scriptElements.toString();
-
-			int startIndex = 0, endIndex = 0;
-
-			for (int i = 0, count = 0; i < rawData.length(); i++) {
-				if (rawData.charAt(i) == '{') {
-					count++;
-					if (count == 2) {
-						startIndex = i;
-					}
-				} else if (rawData.charAt(i) == '}') {
-					endIndex = i;
-					break;
-				}
-			}
-
-			rawData = rawData.substring(startIndex, endIndex + 1);
-
-			JsonElement json = new JsonParser().parse(rawData);
-			JsonObject object = json.getAsJsonObject();
-
-			int confirm = object.get("confirmedCount").getAsInt();
-			int dead = object.get("deadCount").getAsInt();
-
-			ServerVoiceChannel ch1 = Main.api.getServerById(671605920333299712L).get().getVoiceChannelById(channel1)
-					.get();
-			ServerVoiceChannel ch2 = Main.api.getServerById(671605920333299712L).get().getVoiceChannelById(channel2)
-					.get();
-
-			ch1.updateName(String.format("中國確診：%d例", confirm));
-			ch2.updateName(String.format("中國死亡：%d例", dead));
-
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-	}
-
-	public void taiwanInfo() {
-
-		try {
-
 			long channel3 = 671705470628659201L;
+			
+			Server server = Main.api.getServerById(671605920333299712L).get();
+			
+			ServerVoiceChannel ch1 = server.getVoiceChannelById(channel1).get();
+			ServerVoiceChannel ch2 = server.getVoiceChannelById(channel2).get();
+			ServerVoiceChannel ch3 = server.getVoiceChannelById(channel3).get();
 
-			Document doc = Jsoup.parse(new URL(url).openStream(), "UTF-8", url);
-			Elements scriptElements = doc.select("#getListByCountryTypeService1");
-
-			String rawData = scriptElements.toString();
-
-			int startIndex = 0, endIndex = 0;
-
-			for (int i = 0; i < rawData.length(); i++) {
-				if (rawData.charAt(i) == '[')
-					startIndex = i;
-				if (rawData.charAt(i) == ']')
-					endIndex = i;
-			}
-
-			rawData = rawData.substring(startIndex, endIndex + 1);
-
-			JsonElement json = new JsonParser().parse(rawData);
-
-			JsonArray array = json.getAsJsonArray();
-
-			int confirm = 0;
-
-			for (int i = 0; i < array.size(); i++) {
-				JsonObject object = array.get(i).getAsJsonObject();
-				String countryName = object.get("provinceName").getAsString();
-				countryName = ChineseUtils.toTraditional(countryName);
-				if (countryName.equals("台灣")) {
-					confirm = object.get("confirmedCount").getAsInt();
-				}
-			}
-
-			ServerVoiceChannel ch3 = Main.api.getServerById(671605920333299712L).get().getVoiceChannelById(channel3).get();
-
-			ch3.updateName(String.format("臺灣確診：%d例", confirm));
-
-		} catch (Exception e) {
+			ch1.updateName(String.format("中國確診：%d例", chinaConfirm));
+			ch2.updateName(String.format("中國死亡：%d例", chinaDead));
+			ch3.updateName(String.format("臺灣確診：%d例", taiwanConfirm));
+			
+		}catch(Exception e) {
 			e.printStackTrace();
 		}
 	}
