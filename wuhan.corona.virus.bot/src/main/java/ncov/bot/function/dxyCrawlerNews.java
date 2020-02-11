@@ -139,7 +139,7 @@ public class dxyCrawlerNews extends TimerTask {
 	}
 	
 	public void infoUpdate() {
-		String url = "https://en.wikipedia.org/wiki/2019%E2%80%9320_Wuhan_coronavirus_outbreak";
+		String url = "https://zh.wikipedia.org/zh-tw/2019%E6%96%B0%E5%9E%8B%E5%86%A0%E7%8B%80%E7%97%85%E6%AF%92%E7%96%AB%E6%83%85";
 		try {
 			
 			Document doc = Jsoup.connect(url).get();
@@ -150,22 +150,22 @@ public class dxyCrawlerNews extends TimerTask {
 			for(int i = 0; i < 20; i++) {
 				for (int j = 0; j < 20; j++) {
 					String country = doc.select(String.format(
-							"#mw-content-text > div > table:nth-child(%d) > tbody > tr:nth-child(%d) > td:nth-child(1)",
+							"#mw-content-text > div > table.infobox.vevent > tbody > tr:nth-child(%d) > td > table > tbody > tr:nth-child(%d) > td:nth-child(1) > a",
 							i, j)).text();
 					String confirm = doc.select(String.format(
-							"#mw-content-text > div > table:nth-child(%d) > tbody > tr:nth-child(%d) > td:nth-child(2)",
+							"#mw-content-text > div > table.infobox.vevent > tbody > tr:nth-child(%d) > td > table > tbody > tr:nth-child(%d) > td:nth-child(2)",
 							i, j)).text();
 					String death = doc.select(String.format(
-							"#mw-content-text > div > table:nth-child(%d) > tbody > tr:nth-child(%d) > td:nth-child(3)",
+							"#mw-content-text > div > table.infobox.vevent > tbody > tr:nth-child(%d) > td > table > tbody > tr:nth-child(%d) > td:nth-child(3)",
 							i, j)).text();
 					confirm = confirm.replaceAll(",", "");
 					death = death.replaceAll(",", "");
 					if (country.equals("")) continue;
-					if (country.contains("Mainland China")) {
+					if (country.contains("中國大陸")) {
 						chinaConfirm = Integer.parseInt(confirm);
 						chinaDead = Integer.parseInt(death);
 					}
-					if (country.contains("Taiwan")) {
+					if (country.contains("臺灣")) {
 						taiwanConfirm = Integer.parseInt(confirm);
 					}
 				}
